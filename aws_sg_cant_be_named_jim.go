@@ -2,21 +2,22 @@ package main
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/wata727/tflint/issue"
 	"github.com/wata727/tflint/tflint"
-	"log"
 )
 
 type AwsSgCantBeNamedJimRule struct {
-	resourceType  string
-	attributeName string
+	ResourceType  string
+	AttributeName string
 }
 
 func NewAwsSgCantBeNamedJimRule() *AwsSgCantBeNamedJimRule {
 	rule := &AwsSgCantBeNamedJimRule{
-		resourceType:  "aws_security_group",
-		attributeName: "name",
+		ResourceType:  "aws_security_group",
+		AttributeName: "name",
 	}
 
 	return rule
@@ -41,7 +42,7 @@ func (r *AwsSgCantBeNamedJimRule) Type() string {
 func (r *AwsSgCantBeNamedJimRule) Check(runner *tflint.Runner) error {
 	log.Printf("[INFO] Check `%s` rule for `%s` runner", r.Name(), runner.TFConfigPath())
 
-	return runner.WalkResourceAttributes(r.resourceType, r.attributeName, func(attribute *hcl.Attribute) error {
+	return runner.WalkResourceAttributes(r.ResourceType, r.AttributeName, func(attribute *hcl.Attribute) error {
 		var name string
 
 		err := runner.EvaluateExpr(attribute.Expr, &name)
@@ -50,7 +51,7 @@ func (r *AwsSgCantBeNamedJimRule) Check(runner *tflint.Runner) error {
 			if name == "jim" {
 				runner.EmitIssue(
 					r,
-					fmt.Sprintf("\"%s\" is named jim.", r.resourceType),
+					fmt.Sprintf("\"%s\" is named jim.", r.ResourceType),
 					attribute.Expr.Range(),
 				)
 			}

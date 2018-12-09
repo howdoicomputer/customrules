@@ -1,21 +1,46 @@
 package main
 
 import (
+	"log"
+	"os"
+	// "path"
+	// "runtime"
+	"strings"
+
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/logutils"
+	colorable "github.com/mattn/go-colorable"
+	"github.com/wata727/tflint/cmd"
+	"github.com/wata727/tflint/issue"
+	"github.com/wata727/tflint/plugin/shared"
 	"github.com/wata727/tflint/rules"
 )
 
-// Rules that are returned to the main cli process
-var defaultRules []rules.Rule
-var deepCheckRUles []rules.Rule
-
 // A collection of Rules
-type RuleCollection struct {
-	rules []rules.Rule
+type Issues struct {
+	logger hclog.Logger
 }
 
-func (r *RuleCollection) Present() []rules.Rule {
-	return r.rules
+var additionalRules = []rules.Rule{
+	NewAwsSgCantBeNamedJimRule(),
+}
+
+func (r *Issues) Process(files []string) []*issue.Issue {
+	cli := cmd.NewCLI(colorable.NewColorable(os.Stdout), colorable.NewColorable(os.Stderr))
+	filter := &logutils.LevelFilter{
+		Levels:   []logutils.LogLevel{"DEBUG", "INFO", "WARN", "ERROR"},
+		MinLevel: logutils.LogLevel(strings.ToUpper(os.Getenv("TFLINT_LOG"))),
+		Writer:   os.Stderr,
+	}
+
+	log.SetOutput(filter)
+	log.SetFlags(log.Ltime | log.Lshortfile)
+
+	cli.SanityCheck(files)
+	cli.ProcessRules(additionalRules...)
+
+	return cli.Issues
 }
 
 var handshakeConfig = plugin.HandshakeConfig{
@@ -25,15 +50,18 @@ var handshakeConfig = plugin.HandshakeConfig{
 }
 
 func main() {
-	rule_collection := &RuleCollection{
-		rules: []rules.Rule{
-			NewAwsSgCantBeNamedJimRule(),
-		},
+	logger := hclog.New(&hclog.LoggerOptions{
+		Level:      hclog.Error,
+		Output:     os.Stderr,
+		JSONFormat: true,
+	})
+
+	ruleCollection := &Issues{
+		logger: logger,
 	}
 
-	// pluginMap is the map of plugins we can dispense.
 	var pluginMap = map[string]plugin.Plugin{
-		"customrules": &rules.RulePlugin{Impl: rule_collection},
+		"customRulesPlugin": &rulesplugin.RuleCollectionPlugin{Impl: ruleCollection},
 	}
 
 	plugin.Serve(&plugin.ServeConfig{
