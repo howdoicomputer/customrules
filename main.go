@@ -8,12 +8,11 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/logutils"
 	colorable "github.com/mattn/go-colorable"
 	"github.com/wata727/tflint/cmd"
 	"github.com/wata727/tflint/issue"
-	"github.com/wata727/tflint/plugin/shared"
+	"github.com/wata727/tflint/plugin"
 	"github.com/wata727/tflint/rules"
 )
 
@@ -22,8 +21,10 @@ type Issues struct {
 	logger hclog.Logger
 }
 
-var additionalRules = []rules.Rule{
-	NewAwsSgCantBeNamedJimRule(),
+var overrideRules = rules.OverrideRules{
+	DefaultRules: []rules.Rule{
+		NewAwsSgCantBeNamedJimRule(),
+	},
 }
 
 func (r *Issues) Process(files []string) []*issue.Issue {
@@ -38,15 +39,9 @@ func (r *Issues) Process(files []string) []*issue.Issue {
 	log.SetFlags(log.Ltime | log.Lshortfile)
 
 	cli.SanityCheck(files)
-	cli.ProcessRules(additionalRules...)
+	cli.ProcessRules(&overrideRules)
 
 	return cli.Issues
-}
-
-var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "BASIC_PLUGIN",
-	MagicCookieValue: "hello",
 }
 
 func main() {
@@ -60,12 +55,5 @@ func main() {
 		logger: logger,
 	}
 
-	var pluginMap = map[string]plugin.Plugin{
-		"customRulesPlugin": &rulesplugin.RuleCollectionPlugin{Impl: ruleCollection},
-	}
-
-	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins:         pluginMap,
-	})
+	plugin.Serve(ruleCollection)
 }

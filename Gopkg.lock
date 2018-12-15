@@ -503,13 +503,14 @@
 
 [[projects]]
   branch = "plugins"
-  digest = "1:d6b3cb101dd103b04fd1f6e191b5447ec1f5dfdfbcf3b0f0f9ee90bd4674bfc9"
+  digest = "1:28a5891d7500c586fdc7af6314d8f25b040a0ddbde24c90cbf98a2f04ce51229"
   name = "github.com/wata727/tflint"
   packages = [
     "client",
     "cmd",
     "issue",
-    "plugin/shared",
+    "plugin",
+    "plugin/discovery",
     "printer",
     "rules",
     "rules/awsrules",
@@ -517,7 +518,7 @@
     "tflint",
   ]
   pruneopts = "UT"
-  revision = "236c5e403ef46e3f6d33171245fc4851eb6faa2f"
+  revision = "1b7bfeb06d730d19aa831160fca5da42d3e0b20b"
   source = "github.com/howdoicomputer/tflint"
 
 [[projects]]
@@ -675,13 +676,12 @@
   analyzer-version = 1
   input-imports = [
     "github.com/hashicorp/go-hclog",
-    "github.com/hashicorp/go-plugin",
     "github.com/hashicorp/hcl2/hcl",
     "github.com/hashicorp/logutils",
     "github.com/mattn/go-colorable",
     "github.com/wata727/tflint/cmd",
     "github.com/wata727/tflint/issue",
-    "github.com/wata727/tflint/plugin/shared",
+    "github.com/wata727/tflint/plugin",
     "github.com/wata727/tflint/rules",
     "github.com/wata727/tflint/tflint",
   ]
